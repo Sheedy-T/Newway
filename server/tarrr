@@ -1,0 +1,25 @@
+const products = [
+  { id: 1, name: "Laptop", size: "large", category: "Laptops", price: 1200, description: "High-performance laptop for all your needs.", image: "/public/images/laptop.jpg" }, 
+  { id: 2, name: "Laptop Workstation", size: "large", category: "Laptops", price: 1800, description: "Powerful workstation for professionals." },
+  { id: 3, name: "Laptop Workstation", size: "large", category: "Laptops", price: 1800, description: "Powerful workstation for professionals." },
+  { id: 4, name: "Phone", size: "medium", category: "Phones", price: 700, description: "Latest smartphone with cutting-edge features." },
+  { id: 5, name: "Phone Pouch", size: "small", category: "Phones", price: 25, description: "Protective phone pouch with sleek design." },
+  { id: 6, name: "iPhone 14", size: "medium", category: "Phones", price: 999, description: "Apple iPhone 14 with advanced features." },
+  { id: 7, name: "iPhone 14 Case", size: "small", category: "Accessories", price: 35, description: "Stylish and protective iPhone case." },
+  { id: 8, name: "iPhone 14 Charger", size: "small", category: "Accessories", price: 45, description: "Fast-charging adapter for iPhone 14." },
+  { id: 9, name: "Earbuds", size: "small", category: "Accessories", price: 99, description: "Wireless earbuds with rich sound quality." },
+  { id: 10, name: "iWatch Series 9", size: "small", category: "iWatch", price: 499, description: "Latest Apple Watch with advanced tracking." },
+  { id: 11, name: "iWatch SE", size: "small", category: "iWatch", price: 279, description: "Affordable Apple Watch SE." },
+  { id: 12, name: "iWatch Series 9", size: "small", category: "iWatch", price: 499, description: "Latest Apple Watch with advanced tracking." },
+  { id: 13, name: "iWatch SE", size: "small", category: "iWatch", price: 279, description: "Affordable Apple Watch SE." },
+  { id: 14, name: "Airpods Pro", size: "small", category: "Earbuds/Airpods", price: 249, description: "Apple Airpods Pro with noise cancellation." },
+  { id: 15, name: "Galaxy Buds", size: "small", category: "Earbuds/Airpods", price: 199, description: "Samsung Galaxy Buds with immersive sound." },
+  { id: 16, name: "Beats Fit Pro", size: "small", category: "Earbuds/Airpods", price: 229, description: "Beats Fit Pro for active lifestyles." },
+  { id: 17, name: "Sony WF-1000XM5", size: "small", category: "Earbuds/Airpods", price: 299, description: "Sony flagship earbuds with top-notch audio." },
+  { id: 18, name: "JBL Tune 130NC", size: "small", category: "Earbuds/Airpods", price: 149, description: "JBL earbuds with noise-cancelling feature." },
+];
+
+http://localhost:5173/live/x3y9abz?role=student&name=Franklin&mode=sfu
+http://localhost:5173/live/x3y9abz?role=admin&name=Shedrack&mode=sfu
+http://localhost:5173/live/x3y9abz?role=admin&name=Shedrack
+http://localhost:5173/live/x3y9abz?role=student&name=Franklin
