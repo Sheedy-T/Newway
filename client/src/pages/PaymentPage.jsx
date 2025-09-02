@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 // We are hardcoding the URL for now to resolve the warning.
 // For production, you should use a proper environment variable strategy
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 const PaymentPage = () => {
   const navigate = useNavigate();

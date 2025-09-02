@@ -9,6 +9,8 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import ProgrammingCourses from '../components/ProgrammingCourses';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const Training = () => {
   const [availableCourses, setAvailableCourses] = useState([]);
   const [cart, setCart] = useState([]);
@@ -18,7 +20,7 @@ const Training = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/courses');
+        const response = await axios.get(`${API_BASE_URL}/api/courses`);
         setAvailableCourses(response.data || []);
       } catch (error) {
         console.error('Failed to fetch courses:', error);
