@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 
 // IMPORTANT: match your server CORS origins (localhost not 127.0.0.1)
-const socket = io("http://localhost:5000", { withCredentials: true });
+const socket = io("https://newway-2bho.onrender.com", { withCredentials: true });
 
 export default function LiveRoom() {
   const location = useLocation();

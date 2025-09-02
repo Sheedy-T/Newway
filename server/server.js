@@ -33,6 +33,7 @@ const rooms = {};
 // ---------- Middleware ----------
 app.use(cors({
   origin: [
+    'https://jbmtechservice.netlify.app',
     'http://localhost:3000',
     'http://localhost:5173',
     'http://127.0.0.1:3000',
@@ -85,6 +86,7 @@ const io = new Server(server, {
       'http://127.0.0.1:5173',
       'http://127.0.0.1:3000',
       'http://localhost:3000',
+      'https://jbmtechservice.netlify.app',
     ],
     methods: ['GET', 'POST', "OPTIONS"],
     credentials: true,

@@ -18,9 +18,9 @@ const hiddenProducts = [
   { id: 107, name: "HP Spectre x360", size: "large", category: "Laptops", price: 1500, description: "Versatile 2-in-1 laptop.", image: "/images/hp_spectre.jpg", isFeatured: false, isPromoted: false, promoExpiresAt: null },
 ];
 const slides = [
-  { id: 1, image: "/public/images/yoyo1.png", alt: "Mega Discount on Power Banks!" },
-  { id: 2, image: "/public/images/yoyo2.png", alt: "Get Latest Phones at Great Prices!" },
-  { id: 3, image: "/public/images/yoyo3.png", alt: "Work Smarter with Laptop Workstations!" },
+  { id: 1, image: "/images/yoyo1.png", alt: "Mega Discount on Power Banks!" },
+  { id: 2, image: "/images/yoyo2.png", alt: "Get Latest Phones at Great Prices!" },
+  { id: 3, image: "/images/yoyo3.png", alt: "Work Smarter with Laptop Workstations!" },
 ];
 
 const Store = () => {

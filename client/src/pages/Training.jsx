@@ -59,21 +59,21 @@ const Training = () => {
           >
             <SwiperSlide>
               <img
-                src="/public/images/slidepic2.png"
+                src="/images/slidepic2.png"
                 alt="Physical 1"
                 className="w-full h-full object-cover"
               />
             </SwiperSlide>
             <SwiperSlide>
               <img
-                src="/public/images/slidepic5.png"
+                src="/images/slidepic5.png"
                 alt="Physical 2"
                 className="w-full h-full object-cover"
               />
             </SwiperSlide>
             <SwiperSlide>
               <img
-                src="/public/images/slidepic4.png"
+                src="/images/slidepic4.png"
                 alt="Physical 3"
                 className="w-full h-full object-cover"
               />
@@ -100,21 +100,21 @@ const Training = () => {
           >
             <SwiperSlide>
               <img
-                src="/public/images/slidepic3.png"
+                src="/images/slidepic3.png"
                 alt="Online 1"
                 className="w-full h-full object-cover"
               />
             </SwiperSlide>
             <SwiperSlide>
               <img
-                src="/public/images/slidepic1.png"
+                src="/images/slidepic1.png"
                 alt="Online 2"
                 className="w-full h-full object-cover"
               />
             </SwiperSlide>
             <SwiperSlide>
               <img
-                src="/public/images/slidepic6.png"
+                src="/images/slidepic6.png"
                 alt="Online 3"
                 className="w-full h-full object-cover"
               />
