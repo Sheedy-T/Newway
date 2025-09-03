@@ -13,11 +13,13 @@ router.post("/", async (req, res) => {
     const { title, hostName, isPrivate } = req.body;
     const roomId = Math.random().toString(36).slice(2, 11);
 
-    let existing = await LiveRoom.findOne({ roomId });
+    // Check DB if room exists
+    const existing = await LiveRoom.findOne({ roomId });
     if (existing) {
       return res.status(400).json({ error: "Room already exists" });
     }
 
+    // Save in MongoDB
     const newRoom = new LiveRoom({
       roomId,
       title: title || "Untitled Room",
@@ -26,6 +28,7 @@ router.post("/", async (req, res) => {
     });
     await newRoom.save();
 
+    // Initialize in memory
     rooms[roomId] = { users: {}, screenSharer: null, messages: [] };
 
     res.status(201).json(newRoom);
@@ -79,7 +82,7 @@ router.delete("/:roomId", async (req, res) => {
   try {
     const rooms = req.app.locals.rooms;
     const deleted = await LiveRoom.findOneAndDelete({ roomId: req.params.roomId });
-    delete rooms[req.params.roomId];
+    delete rooms[req.params.roomId]; // also clear from memory
 
     if (!deleted) {
       return res.status(404).json({ error: "Room not found" });
