@@ -20,15 +20,12 @@ const paystackRoutes = require('./routes/paystack');
 const authRoutes = require('./routes/authRoutes');
 const bookingsRoute = require('./routes/bookings');
 
-// ✅ Live Meeting (rooms store + router)
-const liveRoomsRouter = require('./routes/liveRooms'); // A function that returns a router
+// ✅ Live Meeting
+const liveRoomsRouter = require('./routes/liveRooms');
 const signaling = require('./utils/signaling');
 const setupSFU = require('./utils/mediasoup');
 
 const app = express();
-
-// In-memory room state (shared between REST and Socket.IO)
-const rooms = {};
 
 // ---------- Middleware ----------
 app.use(cors({
@@ -58,8 +55,10 @@ app.use('/api/paystack', paystackRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/bookings', bookingsRoute);
 
-// Live rooms REST endpoints (create/list). The shared `rooms` object is passed here.
-app.use('/api/live-rooms', liveRoomsRouter); // Pass the rooms object to the router function
+// ---------- Live rooms ----------
+// Use Express locals for in-memory store
+app.locals.rooms = {};
+app.use('/api/live-rooms', liveRoomsRouter);
 
 // ---------- DB ----------
 mongoose.connect(process.env.MONGODB_URI)
@@ -93,11 +92,9 @@ const io = new Server(server, {
   },
 });
 
-// Attach mesh signaling with the SAME rooms store
-signaling(io, rooms);
-
-// Attach SFU (mediasoup) signaling (shares the same Socket.IO instance)
-setupSFU(io, rooms);
+// Attach signaling with the SAME rooms store
+signaling(io, app.locals.rooms);
+setupSFU(io, app.locals.rooms);
 
 // ---------- Start ----------
 server.listen(PORT, () => {
