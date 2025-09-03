@@ -162,15 +162,17 @@ router.post('/logout', (req, res) => {
 
 // ========================================
 // ✅ /me — return logged-in user if valid cookie
-// ========================================
-// const { auth } = require('../middleware/auth');
+//========================================
 
-// router.get('/me', auth, async (req, res) => {
-//   try {
-//     const user = req.user; // already populated in middleware
-//     res.json({ success: true, user });
-//   } catch (err) {
-//     console.error("Error in /me:", err);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// });
+const { auth } = require('../middleware/auth');
+
+router.get('/me', auth, async (req, res) => {
+  try {
+    const user = req.user; // already populated in middleware
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error("Error in /me:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+module.exports = router; 
