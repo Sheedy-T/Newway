@@ -59,7 +59,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/bookings', bookingsRoute);
 
 // Live rooms REST endpoints (create/list). The shared `rooms` object is passed here.
-app.use('/api/live-rooms', liveRoomsRouter(rooms)); // Pass the rooms object to the router function
+app.use('/api/live-rooms', liveRoomsRouter); // Pass the rooms object to the router function
 
 // ---------- DB ----------
 mongoose.connect(process.env.MONGODB_URI)
