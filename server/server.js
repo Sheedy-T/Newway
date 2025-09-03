@@ -1,6 +1,6 @@
 // server/routes/liveRooms.js
 const express = require("express");
-const LiveRoom = require("../models/LiveRoom");
+
 
 const router = express.Router();
 
