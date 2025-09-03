@@ -121,10 +121,11 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1d' }
     );
 
+    // ✅ Cross-site cookie setup
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax", // "None" if frontend is hosted on a different domain
+      sameSite: "none",   // IMPORTANT for Netlify + Render
       maxAge: 24 * 60 * 60 * 1000,
     });
 
@@ -148,11 +149,33 @@ router.post('/login', async (req, res) => {
 });
 
 // ========================================
-// ✅ Logout — clear the cookie
+// ✅ Logout — clear the cookie (cross-site safe)
 // ========================================
 router.post('/logout', (req, res) => {
-  res.clearCookie("token");
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "none",
+  });
   res.status(200).json({ success: true, message: "Logged out successfully" });
+});
+
+// ========================================
+// ✅ /me — return logged-in user if valid cookie
+// ========================================
+const authMiddleware = require('../middleware/auth'); // assumes you already have auth middleware
+
+router.get('/me', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error("Error in /me:", err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 module.exports = router;
