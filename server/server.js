@@ -1,109 +1,97 @@
-// server/server.js
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const path = require('path');
-const cookieParser = require('cookie-parser');
-const http = require('http');
-const { Server } = require('socket.io');
+// server/routes/liveRooms.js
+const express = require("express");
+const LiveRoom = require("../models/LiveRoom");
 
-// ✅ Utilities
-const listAllRoutes = require('./utils/listAllRoutes');
+const router = express.Router();
 
-// ✅ API Routes
-const courseRoutes = require('./routes/courses');
-const productRoutes = require('./routes/products');
-const orderRoutes = require('./routes/orders');
-const profileRoutes = require('./routes/profile');
-const paystackRoutes = require('./routes/paystack');
-const authRoutes = require('./routes/authRoutes');
-const bookingsRoute = require('./routes/bookings');
+// ----------------------
+// CREATE a new room
+// ----------------------
+router.post("/", async (req, res) => {
+  try {
+    const rooms = req.app.locals.rooms;
+    const { title, hostName, isPrivate } = req.body;
+    const roomId = Math.random().toString(36).slice(2, 11);
 
-// ✅ Live Meeting
-const liveRoomsRouter = require('./routes/liveRooms');
-const signaling = require('./utils/signaling');
-const setupSFU = require('./utils/mediasoup');
+    // Check DB if room exists
+    const existing = await LiveRoom.findOne({ roomId });
+    if (existing) {
+      return res.status(400).json({ error: "Room already exists" });
+    }
 
-const app = express();
+    // Save in MongoDB
+    const newRoom = new LiveRoom({
+      roomId,
+      title: title || "Untitled Room",
+      hostName: hostName || "Admin",
+      isPrivate: isPrivate || false,
+    });
+    await newRoom.save();
 
-// ---------- Middleware ----------
-app.use(cors({
-  origin: [
-    'https://jbmtechservice.netlify.app',
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:4040',
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}));
-app.use(express.json());
-app.use(cookieParser());
-app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+    // Initialize in memory
+    rooms[roomId] = { users: {}, screenSharer: null, messages: [] };
 
-// ---------- API ----------
-app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/profile', profileRoutes);
-app.use('/api/paystack', paystackRoutes);
-app.use('/api/courses', courseRoutes);
-app.use('/api/bookings', bookingsRoute);
-
-// ---------- Live rooms ----------
-// Use Express locals for in-memory store
-app.locals.rooms = {};
-app.use('/api/live-rooms', liveRoomsRouter);
-
-// ---------- DB ----------
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB connected successfully'))
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
-  });
-
-// ---------- Error handler ----------
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
+    res.status(201).json(newRoom);
+  } catch (err) {
+    console.error("❌ Error creating room:", err);
+    res.status(500).json({ error: "Failed to create room" });
+  }
 });
 
-// ---------- HTTP + Socket.IO ----------
-const PORT = process.env.PORT || 5000;
-const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://127.0.0.1:3000',
-      'http://localhost:3000',
-      'https://jbmtechservice.netlify.app',
-    ],
-    methods: ['GET', 'POST', "OPTIONS"],
-    credentials: true,
-  },
+// ----------------------
+// GET all rooms
+// ----------------------
+router.get("/", async (req, res) => {
+  try {
+    const rooms = req.app.locals.rooms;
+    const mongoRooms = await LiveRoom.find().sort({ createdAt: -1 });
+    res.json({
+      persisted: mongoRooms,
+      active: Object.keys(rooms),
+    });
+  } catch (err) {
+    console.error("❌ Error fetching rooms:", err);
+    res.status(500).json({ error: "Failed to fetch rooms" });
+  }
 });
 
-// Attach signaling with the SAME rooms store
-signaling(io, app.locals.rooms);
-setupSFU(io, app.locals.rooms);
-
-// ---------- Start ----------
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  listAllRoutes(app);
+// ----------------------
+// GET one room by ID
+// ----------------------
+router.get("/:roomId", async (req, res) => {
+  try {
+    const rooms = req.app.locals.rooms;
+    const room = await LiveRoom.findOne({ roomId: req.params.roomId });
+    if (!room) {
+      return res.status(404).json({ error: "Room not found" });
+    }
+    res.json({
+      persisted: room,
+      active: rooms[req.params.roomId] || null,
+    });
+  } catch (err) {
+    console.error("❌ Error fetching room:", err);
+    res.status(500).json({ error: "Failed to fetch room" });
+  }
 });
 
-// ---------- Safety ----------
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Rejection:', err);
-  server.close(() => process.exit(1));
+// ----------------------
+// DELETE a room
+// ----------------------
+router.delete("/:roomId", async (req, res) => {
+  try {
+    const rooms = req.app.locals.rooms;
+    const deleted = await LiveRoom.findOneAndDelete({ roomId: req.params.roomId });
+    delete rooms[req.params.roomId]; // also clear from memory
+
+    if (!deleted) {
+      return res.status(404).json({ error: "Room not found" });
+    }
+    res.json({ success: true, deleted });
+  } catch (err) {
+    console.error("❌ Error deleting room:", err);
+    res.status(500).json({ error: "Failed to delete room" });
+  }
 });
+
+module.exports = router;
