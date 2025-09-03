@@ -163,19 +163,14 @@ router.post('/logout', (req, res) => {
 // ========================================
 // ✅ /me — return logged-in user if valid cookie
 // ========================================
-const authMiddleware = require('../middleware/auth'); // assumes you already have auth middleware
+const { auth } = require('../middleware/auth');
 
-router.get('/me', authMiddleware, async (req, res) => {
+router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    const user = req.user; // already populated in middleware
     res.json({ success: true, user });
   } catch (err) {
     console.error("Error in /me:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
-
-module.exports = router;
