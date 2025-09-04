@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+import api from "../api"; // ✅ use axios instance
 
 const OrderSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -14,41 +13,32 @@ const OrderSuccess = () => {
   useEffect(() => {
     const checkAuthAndVerifyPayment = async () => {
       try {
-        
-        const authRes = await fetch(`${API_BASE_URL}/api/profile`, {
-          credentials: "include",
-        });
+        // ✅ check auth with token
+        await api.get("/api/profile");
 
-        if (!authRes.ok) {
-          if (authRes.status === 401) {
-            toast.error("You must be logged in.");
-            navigate("/signin");
-            return;
-          }
-          throw new Error("Authentication check failed.");
-        }
-
-        
         if (!reference) {
           toast.error("Missing transaction reference.");
           setLoading(false);
           return;
         }
 
-        const res = await fetch(`${API_BASE_URL}/api/paystack/verify/${reference}`, {
-          credentials: "include",
-        });
+        // ✅ verify payment with token
+        const res = await api.get(`/api/paystack/verify/${reference}`);
 
-        const data = await res.json();
-        if (res.ok) {
-          setOrder(data.order);
-          localStorage.removeItem("cart");
-        } else {
-          toast.error(data.message || "Payment verification failed.");
-        }
+        setOrder(res.data.order);
+        localStorage.removeItem("cart");
       } catch (err) {
         console.error("Verify payment error:", err);
-        toast.error("Network error verifying payment.");
+
+        if (err.response?.status === 401) {
+          toast.error("You must be logged in.");
+          navigate("/signin");
+          return;
+        }
+
+        toast.error(
+          err.response?.data?.message || "Payment verification failed."
+        );
       } finally {
         setLoading(false);
       }
@@ -68,7 +58,9 @@ const OrderSuccess = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50 p-4">
       <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md text-center">
-        <h1 className="text-3xl font-bold text-green-700 mb-4">Payment Successful!</h1>
+        <h1 className="text-3xl font-bold text-green-700 mb-4">
+          Payment Successful!
+        </h1>
         {order ? (
           <>
             <p className="mb-2">
