@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaUser, FaLock, FaEye, FaEyeSlash, FaSpinner } from 'react-icons/fa';
-//import axios from 'axios';
-import API from "../api";
+import axios from 'axios';
+//import API from "../api";
 
 const SignIn = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -52,7 +52,7 @@ const SignIn = () => {
     setIsLoading(true);
 
     try {
-      const response = await API.post(
+      const response = await axios.post(
         `${API_BASE_URL}/api/auth/login`,
         {
           email: formData.email.toLowerCase().trim(),
