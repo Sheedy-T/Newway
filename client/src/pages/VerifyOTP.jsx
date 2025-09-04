@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import axios from 'axios';
-import { useNavigate, useLocation } from 'react-router-dom';
-//import './VerifyOTP.css'; // Import CSS file
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
+import API from "../api"; // ✅ import your axios instance
 
 const VerifyOTP = () => {
-  const [otp, setOtp] = useState('');
-  const [error, setError] = useState('');
+  const [otp, setOtp] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const { email, fullName, password, phone, userType } = location.state || {};
@@ -13,17 +13,26 @@ const VerifyOTP = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('/api/auth/verify-otp', {
+      const res = await API.post("/api/auth/verify-otp", {
         email,
         otp,
         fullName,
         password,
         phone,
-        userType
+        userType,
       });
-      navigate('/signin');
+
+      // ✅ If server returns token on verification
+      if (res.data?.token) {
+        sessionStorage.setItem("token", res.data.token);
+      }
+
+      toast.success("OTP verified successfully!");
+      navigate("/signin");
     } catch (err) {
-      setError(err.response?.data?.error || 'OTP verification failed');
+      console.error("OTP verify error:", err);
+      setError(err.response?.data?.error || "OTP verification failed");
+      toast.error(err.response?.data?.error || "OTP verification failed");
     }
   };
 
@@ -43,7 +52,7 @@ const VerifyOTP = () => {
           maxLength={6}
         />
         <button type="submit" className="verify-btn">
-          Verify 
+          Verify
         </button>
         {error && <p className="error">{error}</p>}
       </form>
