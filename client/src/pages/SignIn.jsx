@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaUser, FaLock, FaEye, FaEyeSlash, FaSpinner } from 'react-icons/fa';
-import axios from 'axios';
+//import axios from 'axios';
+import API from "../api";
 
 const SignIn = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -51,7 +52,7 @@ const SignIn = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(
+      const response = await API.post(
         `${API_BASE_URL}/api/auth/login`,
         {
           email: formData.email.toLowerCase().trim(),
@@ -63,15 +64,21 @@ const SignIn = () => {
       );
 
       if (response.data.success) {
+        if (rememberMe) {
+        
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-        if (rememberMe) {
-          localStorage.setItem('rememberMe', 'true');
-        }
-        navigate('/');
+        localStorage.setItem('rememberMe', 'true');
+        
       } else {
-        setAuthError(response.data.error || 'Authentication failed');
+        sessionStorage.setItem("token", response.data.token);
+        sessionStorage.setItem("user", JSON.stringify(response.data.user));
+     }
+      navigate('/');
+      } else {
+        setAuthError(response.data.error || "Authentication failed");
       }
+    
     } catch (error) {
       setAuthError('Login failed. ' + (error.response?.data?.error || 'Please try again.'));
     } finally {

@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-
-// The original line caused a build warning because `import.meta` is not available
-// in older JavaScript environments (like the configured 'es2015' target).
-// We are hardcoding the URL for now to resolve the warning.
-// For production, you should use a proper environment variable strategy
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+import API from "../api"; // ✅ central axios instance
 
 const PaymentPage = () => {
   const navigate = useNavigate();
@@ -26,12 +20,13 @@ const PaymentPage = () => {
   const [deliveryAndBankChargeFee, setDeliveryAndBankChargeFee] = useState(50);
   const [totalPrice, setTotalPrice] = useState(0);
 
-  const [cartType, setCartType] = useState("product"); 
+  const [cartType, setCartType] = useState("product");
 
   useEffect(() => {
-    
-    const stateCart = location.state?.cart || JSON.parse(localStorage.getItem("cart")) || [];
-    const stateType = location.state?.type || "product"; 
+    // ✅ Load cart from state or localStorage
+    const stateCart =
+      location.state?.cart || JSON.parse(localStorage.getItem("cart")) || [];
+    const stateType = location.state?.type || "product";
     setCartItems(stateCart);
     setCartType(stateType);
 
@@ -45,34 +40,19 @@ const PaymentPage = () => {
     setSubtotal(calculatedSubtotal);
     setTotalPrice(calculatedSubtotal + fee);
 
-    
-    console.log("Calculated Subtotal:", calculatedSubtotal);
-    console.log("Delivery Fee:", fee);
-    console.log("Total Price:", calculatedSubtotal + fee);
-    
+    // ✅ Fetch user profile
     const fetchUserProfile = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/profile`, {
-          credentials: "include",
-        });
+        const res = await API.get("/api/profile");
+        const userData = res.data;
 
-        if (!res.ok) {
-          if (res.status === 401) {
-            toast.error("Please login to proceed.");
-            navigate("/signin");
-            return;
-          }
-          throw new Error("Failed to fetch profile.");
-        }
-
-        const userData = await res.json();
         setFullName(userData.fullName || userData.name || "");
         setEmail(userData.email || "");
         setPhoneNumber(userData.phone || "");
         setShippingAddress(userData.address || "");
       } catch (error) {
         console.error("Profile fetch error:", error);
-        toast.error("Unable to fetch profile. Please sign in.");
+        toast.error("Please sign in to proceed.");
         navigate("/signin");
       }
     };
@@ -95,16 +75,16 @@ const PaymentPage = () => {
 
     try {
       const isProductOrder = cartType === "product";
-      const backendEndpoint = isProductOrder ? `${API_BASE_URL}/api/orders` : `${API_BASE_URL}/api/bookings`;
+      const backendEndpoint = isProductOrder
+        ? "/api/orders"
+        : "/api/bookings";
 
-      
       const payload = {
         fullName,
         email,
         phoneNumber,
         shippingAddress: isProductOrder ? shippingAddress : "",
         items: cartItems.map((item) => ({
-          
           [isProductOrder ? "productId" : "itemId"]: item.product?._id,
           name: item.product?.name,
           price: item.product?.price,
@@ -114,63 +94,40 @@ const PaymentPage = () => {
         deliveryAndBankChargeFee,
         totalAmount: totalPrice,
         paymentMethod: "card",
-        ...( !isProductOrder && { bookingType: cartType })
+        ...(!isProductOrder && { bookingType: cartType }),
       };
-      
-      console.log("Creating initial record with payload:", payload);
 
-      const res = await fetch(backendEndpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to create record");
-
+      // ✅ Step 1: Create order/booking record
+      const res = await API.post(backendEndpoint, payload);
+      const data = res.data;
       const recordId = isProductOrder ? data.order?._id : data.booking?._id;
-      if (!recordId) throw new Error("Failed to get record ID from server.");
-      
-      
-      console.log("Record created successfully. Initializing Paystack with:", {
-          amount: totalPrice,
-          email,
-          orderId: recordId,
-          type: cartType,
+      if (!recordId) throw new Error("Failed to create order/booking record.");
+
+      // ✅ Step 2: Initialize Paystack
+      const paystackRes = await API.post("/api/paystack/initialize", {
+        amount: totalPrice,
+        email,
+        orderId: recordId,
+        type: cartType,
       });
 
-      const paystackRes = await fetch(`${API_BASE_URL}/api/paystack/initialize`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          amount: totalPrice,
-          email,
-          orderId: recordId,
-          type: cartType,
-        }),
-      });
+      const paystackData = paystackRes.data;
+      if (!paystackData.authorization_url)
+        throw new Error("Paystack initialization failed.");
 
-      const paystackData = await paystackRes.json();
-      if (!paystackRes.ok) throw new Error(paystackData.message || "Paystack init failed");
-
-      console.log("Paystack initialization successful. Redirecting...");
+      // ✅ Redirect user to Paystack payment page
       window.location.href = paystackData.authorization_url;
-
     } catch (err) {
-      console.error("Payment processing error:", err); 
-      toast.error(err.message);
+      console.error("Payment processing error:", err);
+      toast.error(err.response?.data?.error || err.message);
       setLoading(false);
     }
   };
 
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (totalPrice === 0) {
-      toast.error("Cart is empty. Please add items to your cart.");
-      console.error("Error: total price is 0. Payment cannot proceed.");
+      toast.error("Cart is empty. Please add items.");
       return;
     }
     if (paymentMethod === "card") {
@@ -182,19 +139,26 @@ const PaymentPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
         <h2 className="text-3xl font-bold mb-6 text-center text-blue-700">
-          {cartType === "product" ? "Product Checkout" : "Course Booking Checkout"}
+          {cartType === "product"
+            ? "Product Checkout"
+            : "Course Booking Checkout"}
         </h2>
 
         {/* Customer Info */}
         <div className="mb-6 border-b pb-4">
-          <h3 className="text-xl font-semibold mb-3 text-gray-800">Customer Information</h3>
+          <h3 className="text-xl font-semibold mb-3 text-gray-800">
+            Customer Information
+          </h3>
           <p><strong>Name:</strong> {fullName}</p>
           <p><strong>Email:</strong> {email}</p>
           <p><strong>Phone:</strong> {phoneNumber}</p>
 
           {cartType === "product" && (
             <div className="mt-4">
-              <label htmlFor="shippingAddress" className="block text-sm font-bold mb-2">
+              <label
+                htmlFor="shippingAddress"
+                className="block text-sm font-bold mb-2"
+              >
                 Shipping Address:
               </label>
               <textarea
@@ -211,7 +175,7 @@ const PaymentPage = () => {
           )}
         </div>
 
-        
+        {/* Order Summary */}
         <div className="mb-6 border-b pb-4">
           <h3 className="text-xl font-semibold mb-3 text-gray-800">
             {cartType === "product" ? "Order Summary" : "Course Summary"}
@@ -228,7 +192,12 @@ const PaymentPage = () => {
                     : ""}{" "}
                   x {item.quantity}
                 </span>
-                <span>${((item.product?.price || 0) * (item.quantity || 0)).toFixed(2)}</span>
+                <span>
+                  $
+                  {(
+                    (item.product?.price || 0) * (item.quantity || 0)
+                  ).toFixed(2)}
+                </span>
               </li>
             ))}
           </ul>
@@ -248,10 +217,12 @@ const PaymentPage = () => {
           </div>
         </div>
 
-        
+        {/* Payment Form */}
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
-            <h3 className="text-xl font-semibold mb-3 text-gray-800">Select Payment Method</h3>
+            <h3 className="text-xl font-semibold mb-3 text-gray-800">
+              Select Payment Method
+            </h3>
             <label className="inline-flex items-center">
               <input
                 type="radio"
@@ -261,7 +232,9 @@ const PaymentPage = () => {
                 onChange={handlePaymentMethodChange}
                 className="form-radio h-5 w-5 text-blue-600"
               />
-              <span className="ml-2 text-gray-700">Pay with Card (Paystack)</span>
+              <span className="ml-2 text-gray-700">
+                Pay with Card (Paystack)
+              </span>
             </label>
           </div>
 

@@ -4,6 +4,7 @@ import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import axios from 'axios';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
+import API from "../api";
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -62,28 +63,32 @@ const SignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-
+  
     setIsSubmitting(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, {
+      const response = await API.post(`${API_BASE_URL}/api/auth/signup`, {
         fullName: formData.fullName,
         email: formData.email.toLowerCase().trim(),
         password: formData.password,
         phone: formData.phone,
         userType: formData.userType
       });
-
+  
       if (response.data.success) {
+        // ✅ Save token immediately
+        if (response.data.token) {
+          sessionStorage.setItem("token", response.data.token);
+          sessionStorage.setItem("user", JSON.stringify(response.data.user));
+        }
+  
         navigate('/verify-otp', {
           state: {
-            email:response.data.email,
-            
+            email: response.data.email,
             fullName: formData.fullName,
             password: formData.password,
             phone: formData.phone,
             userType: formData.userType,
-
-            message: 'Registration successful! Please sign in.'
+            message: 'Registration successful! Please verify your email/OTP.'
           }
         });
       } else {
