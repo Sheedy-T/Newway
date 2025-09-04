@@ -12,7 +12,8 @@ const Header = () => {
 
   // ✅ Updated logic to check both storage options
   const user = JSON.parse(localStorage.getItem("user")) || JSON.parse(sessionStorage.getItem("user"));
-  const isLoggedIn = !!(localStorage.getItem("token") || sessionStorage.getItem("token"));
+  // ✅ Login status depends on whether the user object exists
+  const isLoggedIn = !!user;
   
   const userFirstName = user?.fullName?.split(" ")[0] || "";
 
@@ -23,9 +24,8 @@ const Header = () => {
       console.error('Logout failed:', error);
     } finally {
       // ✅ Clear from both storage options to be safe
-      localStorage.removeItem("token");
+      
       localStorage.removeItem("user");
-      sessionStorage.removeItem("token");
       sessionStorage.removeItem("user");
       navigate("/signin");
     }

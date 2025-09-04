@@ -7,14 +7,14 @@ const API = axios.create({
   withCredentials: true, // allow cookies if backend sets them
 });
 
-// 🔑 Add token automatically to every request
-API.interceptors.request.use((config) => {
-  const token =
-    sessionStorage.getItem("token") || localStorage.getItem("token"); // fallback if rememberMe
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// // 🔑 Add token automatically to every request
+// API.interceptors.request.use((config) => {
+//   const token =
+//     sessionStorage.getItem("token") || localStorage.getItem("token"); // fallback if rememberMe
+//   if (token) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//   }
+//   return config;
+// });
 
 export default API;

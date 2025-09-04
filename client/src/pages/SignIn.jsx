@@ -43,44 +43,35 @@ const SignIn = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setAuthError('');
-    setErrors({});
   
-    if (!validateForm()) return;
-    setIsLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  // ... (form validation logic)
   
-    try {
-      const response = await API.post( // ✅ Use the custom API instance
-        '/api/auth/login',
-        {
-          email: formData.email.toLowerCase().trim(),
-          password: formData.password,
-        }
-        // ✅ Remove { withCredentials: true } as it's already in api.js
-      );
-  
-      // The backend returns a success flag and token/user in the body
-      if (response.data.success && response.data.token && response.data.user) {
-        const { token, user } = response.data;
-        if (rememberMe) {
-          localStorage.setItem("token", token);
-          localStorage.setItem("user", JSON.stringify(user));
-        } else {
-          sessionStorage.setItem("token", token);
-          sessionStorage.setItem("user", JSON.stringify(user));
-        }
-        navigate('/');
+  try {
+    const response = await API.post('/api/auth/login', {
+      email: formData.email.toLowerCase().trim(),
+      password: formData.password,
+    });
+
+    if (response.data.success) {
+      // ✅ The browser handles the cookie.
+      // We only need to store the user data (not the token).
+      if (rememberMe) {
+        localStorage.setItem("user", JSON.stringify(response.data.user));
       } else {
-        setAuthError(response.data.error || "Authentication failed");
+        sessionStorage.setItem("user", JSON.stringify(response.data.user));
       }
-    } catch (error) {
-      setAuthError('Login failed. ' + (error.response?.data?.error || 'Please try again.'));
-    } finally {
-      setIsLoading(false);
+      navigate('/');
+    } else {
+      setAuthError(response.data.error || "Authentication failed");
     }
-  };
+  } catch (error) {
+    setAuthError('Login failed. ' + (error.response?.data?.error || 'Please try again.'));
+  } finally {
+    setIsLoading(false);
+  }
+};
   
 
   return (
