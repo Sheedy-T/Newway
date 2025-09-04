@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { FaBars } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import API from "../api"; // ✅ Use your custom API client
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,25 +10,23 @@ const Header = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
-  const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/";
-
-  const user = JSON.parse(localStorage.getItem("user"));
-  const isLoggedIn = !!localStorage.getItem("token");
-
+  // ✅ Updated logic to check both storage options
+  const user = JSON.parse(localStorage.getItem("user")) || JSON.parse(sessionStorage.getItem("user"));
+  const isLoggedIn = !!(localStorage.getItem("token") || sessionStorage.getItem("token"));
+  
   const userFirstName = user?.fullName?.split(" ")[0] || "";
 
   const handleLogout = async () => {
     try {
-      await axios.post(
-        `${API_BASE_URL}/api/auth/logout`,
-        {},
-        { withCredentials: true }
-      );
+      await API.post('/api/auth/logout', {});
     } catch (error) {
+      console.error('Logout failed:', error);
     } finally {
+      // ✅ Clear from both storage options to be safe
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
       navigate("/signin");
     }
   };
@@ -137,9 +135,9 @@ const Header = () => {
         {isOpen && (
           <ul
             className="md:hidden flex flex-col items-center 
-                       bg-purple-700 absolute top-[75px] left-0 
-                       w-full py-6 space-y-6 text-lg font-medium 
-                       z-[9999] shadow-lg"
+                        bg-purple-700 absolute top-[75px] left-0 
+                        w-full py-6 space-y-6 text-lg font-medium 
+                        z-[9999] shadow-lg"
           >
             <li>
               <Link
