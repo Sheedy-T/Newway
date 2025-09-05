@@ -1,18 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 import { FaBars } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import API from "../api"; // ✅ Use your custom API client
+import API from "../api";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const dropdownRef = useRef(null);
+  
+  // ✅ Create two separate refs for desktop and mobile dropdowns
+  const desktopDropdownRef = useRef(null);
+  const mobileDropdownRef = useRef(null);
 
-  // ✅ Updated logic to check both storage options
   const user = JSON.parse(localStorage.getItem("user")) || JSON.parse(sessionStorage.getItem("user"));
-  // ✅ Login status depends on whether the user object exists
   const isLoggedIn = !!user;
   
   const userFirstName = user?.fullName?.split(" ")[0] || "";
@@ -23,17 +24,21 @@ const Header = () => {
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
-      // ✅ Clear from both storage options to be safe
-      
       localStorage.removeItem("user");
+      localStorage.removeItem("token");
       sessionStorage.removeItem("user");
+      sessionStorage.removeItem("token");
       navigate("/signin");
     }
   };
 
+  // ✅ Updated effect to handle clicks outside of BOTH dropdowns
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        (desktopDropdownRef.current && !desktopDropdownRef.current.contains(event.target)) &&
+        (mobileDropdownRef.current && !mobileDropdownRef.current.contains(event.target))
+      ) {
         setShowDropdown(false);
       }
     }
@@ -52,34 +57,26 @@ const Header = () => {
           JBMTECH
         </p>
 
+        {/* Desktop Navigation */}
         <ul className="hidden md:flex items-center space-x-8 relative">
           <li>
-            <Link
-              to="/"
-              className="text-black hover:text-white transition-colors duration-300"
-            >
+            <Link to="/" className="text-black hover:text-white transition-colors duration-300">
               HOME
             </Link>
           </li>
           <li>
-            <Link
-              to="/store"
-              className="text-black hover:text-white transition-colors duration-300"
-            >
+            <Link to="/store" className="text-black hover:text-white transition-colors duration-300">
               STORE
             </Link>
           </li>
           <li>
-            <Link
-              to="/training"
-              className="text-black hover:text-white transition-colors duration-300"
-            >
+            <Link to="/training" className="text-black hover:text-white transition-colors duration-300">
               IT TRAINING
             </Link>
           </li>
 
           {isLoggedIn ? (
-            <div className="relative" ref={dropdownRef}>
+            <div className="relative" ref={desktopDropdownRef}> {/* ✅ Assign desktop ref */}
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="bg-blue-500 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-600 transition-colors duration-300"
@@ -106,18 +103,12 @@ const Header = () => {
           ) : (
             <>
               <li>
-                <Link
-                  to="/signin"
-                  className="text-black hover:text-white transition-colors duration-300"
-                >
+                <Link to="/signin" className="text-black hover:text-white transition-colors duration-300">
                   SIGN IN
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/sign-up"
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-800 transition-colors duration-300"
-                >
+                <Link to="/sign-up" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-800 transition-colors duration-300">
                   SIGN UP
                 </Link>
               </li>
@@ -125,6 +116,7 @@ const Header = () => {
           )}
         </ul>
 
+        {/* Mobile Menu Button */}
         <button
           className="md:hidden text-black text-2xl"
           onClick={() => setIsOpen(!isOpen)}
@@ -132,43 +124,29 @@ const Header = () => {
           <FaBars />
         </button>
 
+        {/* Mobile Navigation Menu */}
         {isOpen && (
           <ul
-            className="md:hidden flex flex-col items-center 
-                        bg-purple-700 absolute top-[75px] left-0 
-                        w-full py-6 space-y-6 text-lg font-medium 
-                        z-[9999] shadow-lg"
+            className="md:hidden flex flex-col items-center bg-purple-700 absolute top-[75px] left-0 w-full py-6 space-y-6 text-lg font-medium z-[9999] shadow-lg"
           >
             <li>
-              <Link
-                to="/"
-                onClick={() => setIsOpen(false)}
-                className="text-white hover:text-gray-200"
-              >
+              <Link to="/" onClick={() => setIsOpen(false)} className="text-white hover:text-gray-200">
                 HOME
               </Link>
             </li>
             <li>
-              <Link
-                to="/store"
-                onClick={() => setIsOpen(false)}
-                className="text-white hover:text-gray-200"
-              >
+              <Link to="/store" onClick={() => setIsOpen(false)} className="text-white hover:text-gray-200">
                 STORE
               </Link>
             </li>
             <li>
-              <Link
-                to="/training"
-                onClick={() => setIsOpen(false)}
-                className="text-white hover:text-gray-200"
-              >
+              <Link to="/training" onClick={() => setIsOpen(false)} className="text-white hover:text-gray-200">
                 IT TRAINING
               </Link>
             </li>
 
             {isLoggedIn ? (
-              <li className="w-full text-center" ref={dropdownRef}>
+              <li className="w-full text-center" ref={mobileDropdownRef}> {/* ✅ Assign mobile ref */}
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="w-full text-white hover:text-gray-200"
@@ -198,20 +176,12 @@ const Header = () => {
             ) : (
               <>
                 <li>
-                  <Link
-                    to="/signin"
-                    onClick={() => setIsOpen(false)}
-                    className="text-white hover:text-gray-200"
-                  >
+                  <Link to="/signin" onClick={() => setIsOpen(false)} className="text-white hover:text-gray-200">
                     SIGN IN
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    to="/sign-up"
-                    onClick={() => setIsOpen(false)}
-                    className="text-white hover:text-gray-200"
-                  >
+                  <Link to="/sign-up" onClick={() => setIsOpen(false)} className="text-white hover:text-gray-200">
                     SIGN UP
                   </Link>
                 </li>
