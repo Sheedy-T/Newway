@@ -46,6 +46,12 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+   
+// ---------- Health Check Route ----------
+app.get('/', (req, res) => {
+  res.status(200).send("Server is up and running!");
+});
+
 // ---------- API ----------
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);

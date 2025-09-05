@@ -76,10 +76,18 @@ router.post('/verify-otp', async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
+     
+    // ✨ --- START OF FIX --- ✨
+    // Hash the password before saving
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    // ✨ ---  END OF FIX  --- ✨
+
+
     const user = new User({
       fullName,
       email: email.toLowerCase(),
-      password,   // raw password, let model hash it
+      password: hashedPassword,  // raw password, let model hash it
       phone,
       userType
     });
